@@ -7,6 +7,10 @@ import win32api
 
 running = False
 target_hwnd = None
+KEY_HOLD = 0.01
+C_DELAY = 0.08
+Z_DELAY = 1.0
+V_DELAY = 2.5
 
 def find_minecraft_window():
     def callback(hwnd, windows):
@@ -24,8 +28,14 @@ def press_key(hwnd, key):
     lparam_up = lparam_down | (1 << 30) | (1 << 31)
     # Fokus almadan sadece hedef pencereye tus mesaji gonder.
     win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk, lparam_down)
-    time.sleep(0.03)
+    time.sleep(KEY_HOLD)
     win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk, lparam_up)
+
+def refresh_target_window():
+    global target_hwnd
+    while True:
+        target_hwnd = find_minecraft_window()
+        time.sleep(1)
 
 def toggle():
     global running
@@ -43,26 +53,27 @@ keyboard.add_hotkey("F7", toggle)
 def press_c():
     while True:
         if running:
-            hwnd = find_minecraft_window()
+            hwnd = target_hwnd
             if hwnd:
                 press_key(hwnd, 'c')
-        time.sleep(3)
+        time.sleep(C_DELAY)
 def press_z():
     while True:
         if running:
-            hwnd = find_minecraft_window()
+            hwnd = target_hwnd
             if hwnd:
                 press_key(hwnd, 'z')
-        time.sleep(10)
+        time.sleep(Z_DELAY)
 
 def press_v():
     while True:
         if running:
-            hwnd = find_minecraft_window()
+            hwnd = target_hwnd
             if hwnd:
                 press_key(hwnd, 'v')
-        time.sleep(20)
+        time.sleep(V_DELAY)
 
+threading.Thread(target=refresh_target_window, daemon=True).start()
 threading.Thread(target=press_c, daemon=True).start()
 threading.Thread(target=press_v, daemon=True).start()
 threading.Thread(target=press_z, daemon=True).start()                                                               
