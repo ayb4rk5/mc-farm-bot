@@ -20,18 +20,12 @@ def find_minecraft_window():
 def press_key(hwnd, key):
     vk = ord(key.upper())
     scan = win32api.MapVirtualKey(vk, 0)
-    try:
-        if win32gui.IsIconic(hwnd):
-            win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
-        win32gui.SetForegroundWindow(hwnd)
-    except Exception:
-        # SetForegroundWindow bazi durumlarda izin hatasi verebilir.
-        pass
-
-    # Oyunlar genellikle PostMessage yerine fiziksel input benzeri olayi kabul eder.
-    win32api.keybd_event(vk, scan, 0, 0)
+    lparam_down = 1 | (scan << 16)
+    lparam_up = lparam_down | (1 << 30) | (1 << 31)
+    # Fokus almadan sadece hedef pencereye tus mesaji gonder.
+    win32gui.PostMessage(hwnd, win32con.WM_KEYDOWN, vk, lparam_down)
     time.sleep(0.03)
-    win32api.keybd_event(vk, scan, win32con.KEYEVENTF_KEYUP, 0)
+    win32gui.PostMessage(hwnd, win32con.WM_KEYUP, vk, lparam_up)
 
 def toggle():
     global running
@@ -52,8 +46,6 @@ def press_c():
             hwnd = find_minecraft_window()
             if hwnd:
                 press_key(hwnd, 'c')
-            else:
-                print("C: pencere bulunamadi", flush=True)
         time.sleep(3)
 def press_z():
     while True:
@@ -61,8 +53,6 @@ def press_z():
             hwnd = find_minecraft_window()
             if hwnd:
                 press_key(hwnd, 'z')
-            else:
-                print("Z: pencere bulunamadi", flush=True)
         time.sleep(10)
 
 def press_v():
@@ -71,14 +61,12 @@ def press_v():
             hwnd = find_minecraft_window()
             if hwnd:
                 press_key(hwnd, 'v')
-            else:
-                print("V: pencere bulunamadi", flush=True)
         time.sleep(20)
 
 threading.Thread(target=press_c, daemon=True).start()
 threading.Thread(target=press_v, daemon=True).start()
 threading.Thread(target=press_z, daemon=True).start()                                                               
-print("F7 ile ac/kapat (arka planda sadece Minecraft'a basar)", flush=True)
+print("F7 ile ac/kapat (sadece Minecraft'a gonderir, fokus almaz)", flush=True)
 
 while True:
     time.sleep(1)
